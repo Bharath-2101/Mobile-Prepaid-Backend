@@ -47,7 +47,7 @@ public class AuthService {
         user.setMobile(registerRequestDTO.getMobile());
         user.setEmail(registerRequestDTO.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword()));
-        user.setRole(registerRequestDTO.getRole());
+        user.setRole(Role.USER);
 
         userRepository.save(user);
 

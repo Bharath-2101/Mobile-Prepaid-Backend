@@ -40,23 +40,19 @@ public class UserService {
 
         User user=userRepository.findByMobile(mobile).orElseThrow(()->new UsernameNotFoundException("User not found with mobile "+mobile));
 
-        return new UserResponseDTO(user.getId(),user.getUsername(),user.getMobile(),user.getEmail(),user.getRole());
+        return new UserResponseDTO(user.getId(),user.getName(),user.getMobile(),user.getEmail(),user.getRole());
     }
 
 
-
-
-
-
-    public UserResponseDTO updateUsers(long id, UserRequestDTO user, Authentication authentication) {
-
-        User currentUser = (User) authentication.getPrincipal();
+    public UserResponseDTO updateUsers(long id, UserRequestDTO user, Authentication authentication) throws UsernameNotFoundException, IllegalUpdateException {
 
         User unUpdatedUser = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id " + id));
 
+        User currentUser = (User) authentication.getPrincipal();
+
         if (!currentUser.getMobile().equals(unUpdatedUser.getMobile()) && currentUser.getRole() != User.Role.ADMIN) {
-            throw new IllegalUpdateException("Updation is not allowed.");
+            throw new IllegalUpdateException("Updating is not allowed.");
         }
 
         if (user.getName() != null && !user.getName().isBlank()) {
@@ -67,22 +63,22 @@ public class UserService {
             unUpdatedUser.setMobile(user.getMobile());
         }
 
-        if (currentUser.getRole() == User.Role.ADMIN)
-        {
-            if (user.getRole()!=null && !user.getRole().toString().isBlank())
+            if (currentUser.getRole() == User.Role.ADMIN)
             {
-                unUpdatedUser.setRole(user.getRole());
-            }
-        }
-        else {
-            if (user.getRole()!=null && !user.getRole().toString().isBlank() && user.getRole() != User.Role.ADMIN)
-            {
-                unUpdatedUser.setRole(user.getRole());
+                if (user.getRole()!=null && !user.getRole().toString().isBlank())
+                {
+                    unUpdatedUser.setRole(user.getRole());
+                }
             }
             else {
-                throw new IllegalUpdateException("Role is not allowed.");
+                if (user.getRole()!=null && !user.getRole().toString().isBlank() && user.getRole() != User.Role.ADMIN)
+                {
+                    unUpdatedUser.setRole(user.getRole());
+                }
+                else {
+                    throw new IllegalUpdateException("Role is not allowed.");
+                }
             }
-        }
 
         if (user.getPassword() != null && !user.getPassword().isBlank()) {
             String encodedPassword = passwordEncoder.encode(user.getPassword());
@@ -91,7 +87,7 @@ public class UserService {
 
         User SavedUser=userRepository.save(unUpdatedUser);
 
-        return new UserResponseDTO(SavedUser.getId(),SavedUser.getUsername(),SavedUser.getMobile(),SavedUser.getEmail(),SavedUser.getRole());
+        return new UserResponseDTO(SavedUser.getId(),SavedUser.getName(),SavedUser.getMobile(),SavedUser.getEmail(),SavedUser.getRole());
     }
 
 
