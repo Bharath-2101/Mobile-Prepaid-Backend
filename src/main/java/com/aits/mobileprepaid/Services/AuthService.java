@@ -6,6 +6,7 @@ import com.aits.mobileprepaid.DTOs.RegisterRequestDTO;
 import com.aits.mobileprepaid.DTOs.RegisterResponseDTO;
 import com.aits.mobileprepaid.Entities.User;
 import com.aits.mobileprepaid.Entities.User.Role;
+import com.aits.mobileprepaid.Exceptions.AlreadyExistsException;
 import com.aits.mobileprepaid.Repositories.UserRepository;
 import com.aits.mobileprepaid.Security.JWTUtil;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +37,10 @@ public class AuthService {
         return new LoginResponseDTO(token,user.getName(),user.getMobile(),user.getEmail());
 
     }
-
     public RegisterResponseDTO signUp(RegisterRequestDTO registerRequestDTO) {
+        if (userRepository.findByMobile(registerRequestDTO.getMobile()).isPresent()) {
+            throw new AlreadyExistsException("User already exists with mobile " + registerRequestDTO.getMobile());
+        }
 
         User user = new User();
         user.setName(registerRequestDTO.getName());
@@ -48,7 +51,6 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return new RegisterResponseDTO(user.getName(), user.getMobile(), user.getEmail());
-
+        return new RegisterResponseDTO(user.getName(), user.getEmail(), user.getMobile());
     }
 }
