@@ -48,6 +48,10 @@ public class User implements UserDetails {
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters long")
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
+            message = "Password must include at least one uppercase letter, one lowercase letter, and one number"
+    )
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -56,6 +60,18 @@ public class User implements UserDetails {
     public enum Role {
         USER, ADMIN
     }
+
+    public User(Long id, String name, String mobile, String email, String password, Role role) {
+        this.id = id;
+        this.name = name;
+        this.mobile = mobile;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL)
+    private  List<RechargeHistory> rechargeHistories;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

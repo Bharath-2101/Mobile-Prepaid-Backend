@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -36,6 +38,18 @@ public class RechargePlan {
     @NotNull(message = "Category is required.")
     @Enumerated(EnumType.STRING)
     private Category category;
+
+    @OneToMany(mappedBy = "rechargePlan" , cascade = CascadeType.ALL)
+    private List<RechargeHistory> rechargeHistories;
+
+    public RechargePlan(Long id,String name,Long price,Long validity,String description,Category category) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.description = description;
+        this.category = category;
+        this.validity = validity;
+    }
 
     public enum Category {
         DATA,

@@ -11,8 +11,10 @@ import com.aits.mobileprepaid.Repositories.UserRepository;
 import com.aits.mobileprepaid.Security.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,17 +28,25 @@ public class AuthService {
 
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequestDTO.getMobile(), loginRequestDTO.getPassword())
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequestDTO.getMobile(), loginRequestDTO.getPassword())
+            );
 
-        User user= (User) authentication.getPrincipal();
-        String token = jwtUtil.generateJWT(user);
+            User user = (User) authentication.getPrincipal();
+            String token = jwtUtil.generateJWT(user);
 
 
-        return new LoginResponseDTO(token,user.getName(),user.getMobile(),user.getEmail());
+            return new LoginResponseDTO(token, user.getName(), user.getMobile(), user.getEmail(),user.getRole());
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException("Invalid password");
+        }catch (UsernameNotFoundException e) {
+            throw new UsernameNotFoundException("User does not exist with given Mobile "+loginRequestDTO.getMobile());
+        }
 
     }
+
+
     public RegisterResponseDTO signUp(RegisterRequestDTO registerRequestDTO) {
         if (userRepository.findByMobile(registerRequestDTO.getMobile()).isPresent()) {
             throw new AlreadyExistsException("User already exists with mobile " + registerRequestDTO.getMobile());
