@@ -46,7 +46,7 @@ public class RechargeService {
                 .expirationDate(now.plusDays(plan.getValidity()))
                 .paidAmount(plan.getPrice())
                 .paymentMethod(dto.getPaymentMethod())
-                .paymentDetails(dto.getPaymentDetails())
+                .paymentDetails(maskPaymentDetails(dto.getPaymentDetails()))
                 .build();
 
         rechargeHistoryRepository.save(history);
@@ -80,10 +80,64 @@ public class RechargeService {
         try {
             javaMailSender.send(message);
         } catch (Exception e) {
-            System.err.println("⚠️ Email send failed: " + e.getMessage());
+            System.err.println("Email send failed: " + e.getMessage());
         }
     }
 
+    //Utils
+    public String maskPaymentDetails(String input) {
+        if (input == null) return null;
+        input = input.trim();
+        if (input.isEmpty()) return input;
+        if (input.contains("@")) {
+            String[] parts = input.split("@", 2);
+            String local = parts.length > 0 ? parts[0] : "";
+            String domain = parts.length > 1 ? parts[1] : "";
+
+
+            if (domain.contains(".")) {
+                return input;
+            } else {
+                String maskedLocal;
+                if (local.length() <= 1) {
+                    maskedLocal = "*";
+                } else {
+                    maskedLocal = local.charAt(0) + "*".repeat(Math.max(0, local.length() - 1));
+                }
+                return maskedLocal + "@" + domain;
+            }
+        }
+
+        String digitsOnly = input.replaceAll("\\D", "");
+
+        if (digitsOnly.length() == 10) {
+            return input;
+        }
+
+        if (digitsOnly.length() >= 12 && digitsOnly.length() <= 19) {
+            int unmasked = 4;
+            int total = digitsOnly.length();
+            int maskCount = Math.max(0, total - unmasked);
+
+            StringBuilder maskedDigits = new StringBuilder();
+            for (int i = 0; i < maskCount; i++) maskedDigits.append('X');
+            maskedDigits.append(digitsOnly.substring(maskCount));
+
+            StringBuilder rebuilt = new StringBuilder();
+            int digitIndex = 0;
+            for (int i = 0; i < input.length(); i++) {
+                char c = input.charAt(i);
+                if (Character.isDigit(c)) {
+                    rebuilt.append(maskedDigits.charAt(digitIndex++));
+                } else {
+                    rebuilt.append(c);
+                }
+            }
+            return rebuilt.toString();
+        }
+
+        return input;
+    }
 
 
 }
